@@ -1,0 +1,408 @@
+from django.shortcuts import render, get_object_or_404
+from django.template.response import TemplateResponse
+from django.http import HttpResponseRedirect
+from django.core.files import File
+from STReport.models import ST_log
+from STReport.forms import *
+import sys
+import re
+import time
+import csv
+from datetime import datetime
+from time import mktime
+from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
+
+
+class ReportDetail(DetailView):
+	model = ST_log
+
+class ReportList(ListView):
+	model = ST_log
+
+
+def list_reports(request):
+	d_pk_list = []
+	d_title_list = []
+
+	### delete the selected reports
+	if (request.POST.get('action')=='delete'):
+		all_pk_list = list(map(lambda x : x.pk , ST_log.objects.all() ))
+		d_pk_list = list(filter(lambda x : request.POST.get(str(x))=='on' , all_pk_list ))
+		d_title_list = list(map(lambda x : ST_log.objects.get(pk=x).title , d_pk_list ))
+		confirm_delete = request.POST.get('confirm_delete')
+		request.session['d_pk']=d_pk_list
+		data = {
+			'd_pk_list': d_pk_list,
+			'd_title_list': d_title_list,
+		}
+		response = TemplateResponse(request,'STReport/confirm_delete.html', data , )
+		return response
+
+	### confirm the action before delete
+	elif (request.POST.get('action')=='confirm_delete'):
+		d_pk_list = request.session['d_pk']
+		for pk in d_pk_list:
+			ST_log.objects.filter(id=pk).delete()
+
+	list_form = ST_log_list_Form(request.POST)
+	reports = ST_log.objects.all()
+	data = {
+			'list_form': list_form,
+			'reports': reports,
+			'd_pk_list': d_pk_list,
+			'd_title_list': d_title_list,
+	}
+
+	response = TemplateResponse(request,'STReport/list_reports.html', data, )
+	return response
+
+
+def edit_report(request):
+	form_err=''
+	e_pk = request.POST.get('e_pk')
+	report = get_object_or_404(ST_log, id=e_pk)
+	form = ST_log_Form(request.POST or None, instance=report)
+	if (request.POST.get('action')=='save'):
+		if form.is_valid():
+			form.save()
+			data = {
+				'object':report,
+			} 
+			response = TemplateResponse(request,'STReport/st_log_detail.html', data, )
+			return response
+
+		else:
+			form_err = form.errors
+
+
+	data = {
+		'form':form,
+		'object':report,
+		'form_err':form_err,
+	}
+
+	response = TemplateResponse(request,'STReport/edit_report.html', data, )
+	return response
+
+
+def edit(request):
+	
+	data = {
+	}
+	response = TemplateResponse(request,'stest/edit_report.html', data, )
+	return response
+
+
+def list_report(request):
+	
+	
+	data = {
+	}
+	response = TemplateResponse(request,'stest/report_list.html', data, )
+	return response
+
+
+def index(request):
+
+#	cate_form = PE_Category.objects.all()
+	data = {
+#		'cate_form': cate_form,		
+	}
+
+	response = TemplateResponse(request,'pages/index.html', data, )
+	return response
+
+
+
+
+
+
+def import_log(request):
+
+	form_err =''
+	dt_str_list = []
+	file_name=''
+	debug_data=''
+	debug_data2=''
+	debug_data3=''
+	csv_path=''
+	csv_name=''
+	p_name_list = []
+	new_plot_pk = -1
+	d_title=''
+	begin_time=''
+	begin_time_str=''
+	end_time_str=''
+	process_names=''
+	fn_nopost=''
+	workstation_name = ''
+	workstation_model = ''
+	device = ''
+	tcct_tape = ''
+	st_tape = ''
+
+
+	if (request.POST.get('action')=='import'):
+
+#		start = time.clock()
+		count = 0
+
+		iform = ST_log_import_Form(request.POST, request.FILES)
+		process_names=request.POST.get('process_names')
+		choose_VSZ=request.POST.get('choose_VSZ')
+		choose_RSZ=request.POST.get('choose_RSZ')
+		p_name_list = re.split(',',process_names)
+
+
+		### get name before postfix 
+		file_name=request.FILES.get('data_log')
+		pat_fn_nopost = re.compile("(.+)\.txt",re.I)
+		search_fn_nopost = pat_fn_nopost.search(str(file_name))
+		if search_fn_nopost:
+			fn_nopost = search_fn_nopost.group(1)
+			csv_name = fn_nopost + '.csv'
+			csv_path = './files/stest/'+ csv_name
+		else:
+			csv_path = ''
+			fn_nopost='NONE'
+	
+
+		tu_dic = {}
+		su_dic = {}
+		asp_flag = 0
+		ds_flag = 0
+		tu_flag = 0
+		su_flag = 0
+		process_flag={}
+		dt_str = ''
+		time_diff={}
+
+		# regex 4 basic information
+		pat_wn = re.compile(b"workstation name:\s*(.+)\n",)
+		pat_wm = re.compile(b"workstation model:\s*(.+)\n",)
+		pat_dv = re.compile(b"device:\s*(.+)\n",)
+		pat_tt = re.compile(b"testcell tape:\s*(.+)\n",)
+		pat_st = re.compile(b"smartest tape:\s*(.+)\n",)
+
+		# regex 4 Total used memory
+		pat_tu = re.compile(b"^\s*Total:\s+\d+\s+(\d+)", ) 
+
+		# regex 4 Swap used memory
+		pat_su = re.compile(b"^\s*Swap:\s+\d+\s+(\d+)", ) 
+
+		# regex 4 get time
+		pat_datetime = re.compile(b"^\s*SNAPSHOT:\s*(.+)$",)
+
+		# regex 4 change time zone name CST to China Standart Time
+		pat_cst = re.compile("CST",)
+		
+		# regex 4 all process
+		p_pat_list = {}
+		p_rsz_dict_data={}
+		p_vsz_dict_data={}
+		for p_name in p_name_list:
+			p_pat_list[p_name]=re.compile(b"^\s*\d+\s+\d+\s+(\d+)\s+(\d+).+"+ bytearray(p_name,'utf-8'), )
+			process_flag[p_name]=0
+			p_rsz_dict_data[p_name]={}
+			p_vsz_dict_data[p_name]={}
+		
+		### process data log file
+		f = request.FILES['data_log']
+
+		sct1 = 0
+		sct2 = 0
+		sct3 = 0
+		fl_count = 0
+		data_count = 0
+		for line in f:
+			fl_count += 1
+			
+			# search basic information in the top x(=fl_count) lines
+			if fl_count <= 10:
+				search_wn = pat_wn.search(line)
+				search_wm = pat_wm.search(line)
+				search_dv = pat_dv.search(line)
+				search_tt = pat_tt.search(line)
+				search_st = pat_st.search(line)
+				if search_wn:
+					workstation_name = search_wn.group(1)
+				if search_wm:
+					workstation_model = search_wm.group(1)
+				if search_dv:
+					device = search_dv.group(1)
+				if search_tt:
+					tcct_tape = search_tt.group(1)
+				if search_st:
+					st_tape = search_st.group(1)
+		
+			for p_name in p_name_list:
+				if process_flag[p_name] == 1:
+					search_process = p_pat_list[p_name].search(line)
+					if search_process:
+						if choose_RSZ:
+							p_rsz_dict_data[p_name][dt_str] = int(search_process.group(1).decode("utf-8"))//1024
+						if choose_VSZ:
+							p_vsz_dict_data[p_name][dt_str] = int(search_process.group(2).decode("utf-8"))//1024
+						process_flag[p_name] = 0
+
+				
+			if tu_flag == 1:
+				search_tu = pat_tu.search(line)
+				if search_tu:
+					tu_dic[dt_str] = int(search_tu.group(1).decode("utf-8"))//1024
+					tu_flag = 0
+
+			if su_flag == 1:
+				search_su = pat_su.search(line)
+				if search_su:
+					su_dic[dt_str] = int(search_su.group(1).decode("utf-8"))//1024
+					su_flag = 0
+
+			search_datetime = pat_datetime.search(line)
+
+			if search_datetime:
+				data_count += 1
+				time_string = search_datetime.group(1).decode("utf-8")
+				time_string = pat_cst.sub("China Standard Time", time_string)
+				dt_struct = time.strptime(time_string,"%a %b %d %X %Z %Y")
+				dt_time = datetime.fromtimestamp(mktime(dt_struct))
+				dt_str = time.strftime("%Y-%m-%d %H:%M", dt_struct)
+				dt_str_list.append(dt_str)
+
+				tu_flag = 1
+				su_flag = 1
+				
+				for p_name in p_name_list:
+					if choose_VSZ:
+						p_vsz_dict_data[p_name][dt_str] = ''
+					if choose_RSZ:
+						p_rsz_dict_data[p_name][dt_str] = ''
+					if process_flag[p_name]==0:
+						process_flag[p_name]=1
+
+				### get begin time
+				if (data_count == 1):
+					#begin_time = dt_str
+					begin_time = dt_time
+					begin_time_str = dt_str
+
+				### get end time
+				end_time_str = dt_str
+
+				### calculate time passed 
+				time_diff[dt_str]=int((dt_time-begin_time).seconds)//360/10+(dt_time-begin_time).days*24
+		
+#		elapsed = (time.clock() - start)
+
+
+		### Write all list into csv file
+		with open('temp/stest.csv', 'w', encoding='utf-8',newline='') as csvfile:
+			fieldnames = ['Time Passed','Total Used','Swap Used']
+			for p in p_name_list:
+				if choose_VSZ:
+					fieldnames.append(p+' vsz')
+				if choose_RSZ:
+					fieldnames.append(p+' rsz')
+	
+			writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+			writer.writeheader()
+	
+			if dt_str_list:
+				for dt in dt_str_list:
+					row_dic = {
+						#'Date Time':dt,
+						'Time Passed':time_diff[dt],
+						'Total Used':tu_dic[dt],
+						'Swap Used':su_dic[dt],
+					}
+					for p in p_name_list:
+						if choose_VSZ:
+							row_dic[p+' vsz']=p_vsz_dict_data[p][dt]
+						if choose_RSZ:
+							row_dic[p+' rsz']=p_rsz_dict_data[p][dt]
+					writer.writerow( row_dic )
+	
+		### get data automatically
+		tf = open('temp/stest.csv', encoding='utf-8')
+		sf = File(tf)
+		sf.name = csv_name
+		d_title = fn_nopost
+
+		iform.files["data_csv"] = sf
+		iform.data["title"] = d_title
+		iform.data['begin_time'] = begin_time_str
+		iform.data['end_time'] = end_time_str
+		iform.data['workstation_model'] = workstation_model
+		iform.data['workstation_name'] = workstation_name
+		iform.data['device'] = device
+		iform.data['st_tape'] = st_tape
+		iform.data['tcct_tape'] = tcct_tape
+
+		### Save after validateion or return err
+		if iform.is_valid():
+			new_plot_data = iform.save()
+			new_plot_pk = new_plot_data.pk
+		else:
+			#me=request.FILES.get('data_log')
+			form_err = iform.errors
+			new_plot_pk = -2
+
+		tf.close()
+		sf.close()
+
+		debug_data = new_plot_pk
+		debug_data2 = sct2
+		debug_data3 = sct3
+
+
+
+	else:
+		iform = ST_log_import_Form()
+
+#	form = ST_log_Form()
+
+
+
+
+	### Save to the database
+	if (request.POST.get('action')=='save'):
+		new_plot_pk = request.POST.get('pk')
+		if new_plot_pk:
+			log_instance = get_object_or_404(ST_log, id=new_plot_pk)
+			iform = ST_log_import_Form(request.POST or None, instance=log_instance)
+			#form['data_log']=file_name
+#			setattr(form,'data_log',file_name)
+			if iform.is_valid():
+				iform.save()
+			else:
+				form_err=iform.errors
+		else:
+			form_err=iform.errors
+
+	data = {
+#			'form':form,
+			'iform':iform,
+			'form_err':form_err,
+			'd_title':d_title,
+			'begin_time':begin_time_str,
+			'end_time':end_time_str,
+			'workstation_model':workstation_model,
+			'workstation_name':workstation_name,
+			'device':device,
+			'st_tape':st_tape,
+			'tcct_tape':tcct_tape,
+#			'debug_data':debug_data,
+#			'debug_data2':debug_data2,
+#			'debug_data3':debug_data3,
+			'csv_path':csv_path,
+			'new_plot_pk':new_plot_pk,
+			'process_names':process_names,
+#			'duration_data':duration_data,
+	}
+
+
+
+	response = TemplateResponse(request,'stest/import_log.html', data, )
+	return response
+

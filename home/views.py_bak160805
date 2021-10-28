@@ -1,0 +1,9 @@
+from django.template.response import TemplateResponse
+
+def dashboard(request):
+	data = {
+#		'cate_form': cate_form,		
+	}
+
+	response = TemplateResponse(request,'DashBoard.html', data, )
+	return response

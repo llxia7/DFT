@@ -1,0 +1,15 @@
+{% extends "django_admin_base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} {% trans 'MIND SYSTEM' %} {{ VERSION }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">{% trans 'MIND SYSTEM' %} {{ VERSION }}</h1>
+{% endblock %}
+
+{% block nav-global %}
+<!--
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href="/ws/">Weekly Schedule</a>    <a href="/talt/">TALT</a>    <a href="/pidsh/">PIDSH</a>    <a href="/tsw/">TSW</a>    <a href="/rsc/">RSC</a> 
+-->
+{% endblock %}
+

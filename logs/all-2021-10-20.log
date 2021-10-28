@@ -1,0 +1,18 @@
+[2021-10-20 15:12:28,093] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET / HTTP/1.1" 200 20513
+[2021-10-20 15:12:28,116] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/bootstrap/dist/css/bootstrap.min.css HTTP/1.1" 200 117150
+[2021-10-20 15:12:28,119] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/metisMenu/dist/metisMenu.min.css HTTP/1.1" 200 781
+[2021-10-20 15:12:28,121] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/dist/css/timeline.css HTTP/1.1" 200 3423
+[2021-10-20 15:12:28,121] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/dist/css/sb-admin-2.css HTTP/1.1" 200 5593
+[2021-10-20 15:12:28,125] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/datatables-plugins/integration/bootstrap/3/dataTables.bootstrap.css HTTP/1.1" 200 7616
+[2021-10-20 15:12:28,125] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/datatables-responsive/css/dataTables.responsive.css HTTP/1.1" 200 2444
+[2021-10-20 15:12:28,126] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/metisMenu/dist/metisMenu.min.js HTTP/1.1" 200 1879
+[2021-10-20 15:12:28,126] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/bootstrap/dist/js/bootstrap.min.js HTTP/1.1" 200 35452
+[2021-10-20 15:12:28,127] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/font-awesome/css/font-awesome.min.css HTTP/1.1" 200 27466
+[2021-10-20 15:12:28,127] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/jquery/dist/jquery.min.js HTTP/1.1" 200 84355
+[2021-10-20 15:12:28,172] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/bower_components/font-awesome/fonts/fontawesome-webfont.woff2?v=4.5.0 HTTP/1.1" 200 66624
+[2021-10-20 15:12:28,249] [base.py:152] [base:get_response] [WARNING]- Not Found: /favicon.ico
+[2021-10-20 15:12:28,249] [basehttp.py:124] [basehttp:log_message] [WARNING]- "GET /favicon.ico HTTP/1.1" 404 3861
+[2021-10-20 15:12:33,454] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /stest/report_detail/27 HTTP/1.1" 200 29851
+[2021-10-20 15:12:33,472] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/js/google-jsapi.js HTTP/1.1" 200 25285
+[2021-10-20 15:12:33,472] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /static/js/jquery.csv-0.71.js HTTP/1.1" 200 27746
+[2021-10-20 15:12:34,961] [basehttp.py:124] [basehttp:log_message] [INFO]- "GET /files/streport/mtbf_844_crossfunc_0713_ws24.csv HTTP/1.1" 200 200167

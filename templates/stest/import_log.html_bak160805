@@ -1,0 +1,293 @@
+{% extends "stest/ST_base.html" %}
+{% load i18n %}
+
+{% block pageWrapper %}
+
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header">Import Report</h1>
+    </div>
+	<div class="col-lg-12" style="color:red;">
+		<p> {{ form_err }} </p>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<!-- /.row -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Import Data
+            </div>
+            <div class="panel-body">
+                <div class="row">
+					<form role="form" action=/stest/import_log enctype="multipart/form-data" method="post">{% csrf_token %}
+						<div class="col-lg-6">
+                            <div class="form-group">
+								Memory Log File : {{ iform.data_log }}
+							</div>
+                            <div class="form-group">
+								Process Names : 
+								<input id="id_process_names" name="process_names" class="form-control" type="text" value="ATE-server-process,DatalogServices" width="100%">  
+									{{ iform.choose_VSZ }} VSZ
+										 {{ iform.choose_RSZ }} RSZ
+
+
+
+									{{ iform.import_file.err }}
+											{{ iform.process_names.err }}
+											{{ iform.choose_vsz.err }}
+											{{ iform.choose_rsz.err }}
+
+                            </div>
+						</div>
+						<div class="col-lg-6">
+                            <div class="form-group">
+								Testtime Log File : {{ iform.time_csv }}
+							</div>
+						</div>
+						<div class="col-lg-12">
+							<button type="submit" class="btn btn-default" name="action" value="import">Import Log</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+				Save to Database
+            </div>
+            <div class="panel-body">
+				<form role="form" action=/stest/import_log enctype="multipart/form-data" method="post">{% csrf_token %}
+					<div class="row">
+						<div class="col-lg-6">
+                            <div class="form-group">
+								Title: <input id="id_title" name="title" value="{{ d_title }}" class="form-control" >
+								<input type="hidden" name="pk" value="{{ new_plot_pk }}">
+							</div>
+                            <div class="form-group">
+								Begin Time: <input id="id_begin_time" name="begin_time" value="{{ begin_time }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								End Time: <input id="id_end_time" name="end_time" value="{{ end_time }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								Process Names: <input id="id_porcess_names" name="process_names" value="{{ process_names }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								<!--
+								<table>
+									<tr><td> Errors : {{ form_err }}</td></tr>
+									<tr><td> Debug Data : {{ debug_data }}</td></tr>
+									<tr><td> Debug Data2 : {{ debug_data2 }}</td></tr>
+									<tr><td> Debug Data3 : {{ debug_data3 }}</td></tr>
+								</table>
+								-->
+                            </div>
+						</div>
+						<div class="col-lg-6">
+                            <div class="form-group">
+								Workstation Model: <input id="id_workstation_model" name="workstation_model" value="{{ workstation_model }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								Workstation Name: <input id="id_workstation_name" name="workstation_name" value="{{ workstation_name }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								ST Tape : <input id="id_st_tape" name="st_tape" value="{{ st_tape }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								TCCT Tape : <input id="id_tcct_tape" name="tcct_tape" value="{{ tcct_tape }}" class="form-control" >
+							</div>
+                            <div class="form-group">
+								Device : <input id="id_device" name="device" value="{{ device }}" class="form-control" >
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-lg-9">
+                            <div class="form-group">
+								<button type="submit" class="btn btn-default" name="action" value="save">Confirm</button>
+                            </div>
+						</div>
+					</div>
+
+				</form>
+                <div class="row">
+                    <div class="col-lg-9">
+						<div class="row" id="memory_data" style="width: 900px; height: 500px"></div>
+                        <div class="form-group">
+							Remarks: <textarea id="id_remarks_mem" name="remarks_mem" class="form-control" rows=5 >
+							</textarea>
+                        </div>
+					</div>
+                    <div class="col-lg-9">
+						<div class="row" id="testtime_data" style="width: 900px; height: 500px"></div>
+                        <div class="form-group">
+							Remarks: <textarea id="id_remarks_tet" name="remarks_tet" class="form-control" rows=5 >
+							</textarea>
+                        </div>
+					</div>
+                </div>
+                <!-- /.row (nested) -->
+            </div>
+            <!-- /.panel-body -->
+        </div>
+        <!-- /.panel -->
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<!-- /.row -->
+{% endblock %}
+
+
+
+{% block googleChart %}
+
+<META HTTP-EQUIV="pragma" CONTENT="no-cache"> 
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, must-revalidate"> 
+<META HTTP-EQUIV="expires" CONTENT="0">
+
+<!-- ### Google Chart -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<!--
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+-->
+<script src="/templates/js/google-jsapi.js"></script>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script> 
+<script src="/templates/js/jquery.csv-0.71.js"></script> 
+
+
+
+
+<!-- ############# Line Chart Function ############## -->
+<script type="text/javascript">
+//	google.load("visualization", "1", {packages:["corechart"]});
+//	google.setOnLoadCallback(drawChart);
+//
+//	function drawChart() {
+//		var data
+//        $.get("/temp/stest.csv",function(csvString){
+//			
+//			var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+//			//console.log( "array data" + arrayData );
+//			
+//
+//			// this new DataTable object holds all the data
+//			var data = new google.visualization.arrayToDataTable(arrayData);
+//			
+//			// this view can select a subset of the data at a time
+//			var view = new google.visualization.DataView(data);
+//
+//			view.setColumns([0,1]);
+//
+//			var options = {
+//				chart: {
+//					title: 'Box Office Earnings in First Two Weeks of Opening',
+//					subtitle: 'in millions of dollars (USD)'
+//				},
+//				width: 900,
+//				height: 500,
+//                lineWidth: 4,
+//                colors: ['#F78181','#DA81F8', '#8197F8', '#9FF781', 'F781F3', 'F3F781', '58FAD0'],
+//				vAxis: {format:'#,### MB'},
+//				hAxis: {format:'# H'}
+//
+//			};
+//			
+//			//var chart = new google.charts.Line(document.getElementById('linechart_material'));
+//			var chart = new google.visualization.LineChart(document.getElementById('linechart_material'));
+//			
+//			chart.draw(data, options);
+//		});
+//		console.log("in function debug result = " + data );
+//	}
+//
+//	console.log("after function debug result = "  );
+//	
+//
+
+
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawMemoryChart);
+    google.setOnLoadCallback(drawTesttimeChart);
+
+
+    function drawMemoryChart() {
+        var data
+        console.log("./files/" + "{{ object.data_csv }}");
+            
+        //$.get("{{ object.data_csv.url }}",function(csvString){
+        $.get("/temp/stest.csv",function(csvString){
+        
+            var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+            var data = new google.visualization.arrayToDataTable(arrayData);
+            var view = new google.visualization.DataView(data);
+
+            view.setColumns([0,1]);
+
+            var options = {
+                chart: {
+                    title: 'Box Office Earnings in First Two Weeks of Opening',
+                    subtitle: 'in millions of dollars (USD)'
+                },
+                width: 900,
+                height: 500,
+                lineWidth: 4,
+                colors: ['#F78181','#DA81F8', '#8197F8', '#9FF781', 'F781F3', 'F3F781', '58FAD0'],
+				vAxis: {format:'#,### MB'},
+				hAxis: {format:'# H'}
+
+            };
+            
+            //var chart = new google.charts.Line(document.getElementById('memory_data'));
+            var chart = new google.visualization.LineChart(document.getElementById('memory_data'));
+            
+            chart.draw(data, options);
+        });
+        console.log("in function debug result = " + data );
+    }
+
+    function drawTesttimeChart() {
+        var data
+        console.log("./files/" + "{{ object.time_csv }}");
+            
+        $.get("{{ object.time_csv.url }}",function(csvString){
+        
+            var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+            var data = new google.visualization.arrayToDataTable(arrayData);
+            var view = new google.visualization.DataView(data);
+
+            view.setColumns([0,1]);
+
+            var options = {
+                chart: {
+                    title: 'Box Office Earnings in First Two Weeks of Opening',
+                    subtitle: 'in millions of dollars (USD)'
+                },
+                width: 900,
+                height: 500,
+                lineWidth: 4,
+                colors: ['#000080', '#8197F8', '#9FF781', 'F781F3', 'F3F781', '58FAD0'],
+				vAxis: {format:'#,### S'},
+				hAxis: {format:'# '}
+
+            };
+            
+            var chart = new google.visualization.LineChart(document.getElementById('testtime_data'));
+            
+            chart.draw(data, options);
+        });
+        console.log("in function debug result = " + data );
+    }
+
+
+</script>
+
+
+
+
+
+</script>
+{% endblock %}
+

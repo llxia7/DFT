@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+{% extends "DFT_base.html" %}
+{% load i18n %}
+
+
+{% block pageWrapper %}
+{% endblock %}
+
+
+{% block googleChart %}
+
+    <!-- ### Google Chart -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="/static/js/google-jsapi.js"></script>
+<script src="/static/js/jquery.csv-0.71.js"></script>
+
+<!-- ############# Line Chart Function ############## -->
+<script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawMemoryChart);
+    google.setOnLoadCallback(drawHardDiskChart);
+    google.setOnLoadCallback(drawTesttimeChart);
+
+    function drawHardDiskChart() {
+      $.get("{{ object.data_csv.url }}",function(csvString){
+        var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+        var data = new google.visualization.DataTable();
+        // add data
+        data.addColumn('number', 'Time Passed');
+        data.addColumn('number', 'Used');
+        data.addColumn('number', 'Avail');
+
+        //find hard disk data start index
+        for(var hd_start = 0;hd_start<arrayData[0].length;hd_start++)
+            if(arrayData[0][hd_start].includes("HardDisk")) break;
+        //add row to dataTable, hard disk data is last 6 values
+        for(var i=1; i<arrayData.length; i++){
+          tp = [arrayData[i][0]];
+          hd_val = arrayData[i].slice(hd_start);
+          hd_row = tp.concat(hd_val)
+          data.addRow(hd_row);
+        }
+
+        var options = {
+            chart: {
+                title: "{{ object.title }}",
+                subtitle: ""
+            },
+            chartArea: {
+                left:80,
+                right:30,
+                top: 80,
+                bottom: 60
+            },
+            legend: {
+                position: 'top',
+            maxLines: 2
+            },
+            width: 'auto',
+            height: 600,
+            lineWidth: 4,
+            colors: ['#CC0000', '#009933', '#9999FF','#FF9900', '#009999', '#CC00CC', '#CC9900', '#006699'],
+            vAxis: {
+                format:'#,### GB',
+                gridlines: {count: 9}
+            },
+            hAxis: {
+                format:'# H',
+                viewWindowMode:'maximized',
+                gridlines: {count: 17}
+            },
+            tootip: {
+                trigger: 'selection'
+            }
+
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('harddisk_data'));
+
+        chart.draw(data, options);
+      });
+    }
+
+    function drawMemoryChart() {
+//{#        var data#}
+//{#        console.log("./files/" + "{{ object.data_csv }}");#}
+//{#        console.log("object.data_csv : " + "{{ object.data_csv.url }}")#}
+
+
+        $.get("{{ object.data_csv.url }}",function(csvString){
+
+            var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+//{#            var data = new google.visualization.arrayToDataTable(arrayData);#}
+//            console.log(arrayData[0].length);
+            //console.log(arrayData[1]);
+            //console.log(arrayData[1][1]);
+            var data = new google.visualization.DataTable();
+
+            // calc memory data length
+            mem_data_length = 0
+            for(var ml = 0; ml < arrayData[0].length; ml++){
+                if (!arrayData[0][ml].includes("HardDisk")){
+                  mem_data_length += 1
+                }
+            }
+//            console.log(mem_data_length);
+
+            // create columns for DataTable
+            for (var j=0; j<mem_data_length;j++){
+                if(j==0){
+                    data.addColumn('number',arrayData[0][j]);
+                }
+                else if((j-1)%3==0){
+                    data.addColumn('number',arrayData[0][j]);
+                    data.addColumn({type:'string',role:'annotation'});
+                    data.addColumn({type:'string',role:'annotationText'});
+                    data.addColumn({type:'string',role:'tooltip'});
+                }
+            }
+
+            // add data to the DataTable
+            for (var i=1;i<arrayData.length;i++){
+                var tmp=new Array();
+                for (var k=0; k<mem_data_length; k++){
+                    if(k==0){
+                        tmp.push(arrayData[i][k]);
+                    }
+                    else if(k%3==0){
+                        tmp.push(arrayData[i][k]);
+                        tmp.push(arrayData[i][0]+' H'+"\n"+arrayData[0][k-2]+': '+arrayData[i][k-2]+' GB');
+                    }
+                    else{
+                        tmp.push(arrayData[i][k]);
+                    }
+                }
+                data.addRow(tmp);
+//                    console.log(tmp);
+            }
+
+
+            var options = {
+                chart: {
+                    title: "{{ object.title }}",
+                    subtitle: ""
+                },
+                chartArea: {
+                    left:80,
+                    right:30,
+                    top: 80,
+                    bottom: 60
+                },
+                legend: {
+                    position: 'top',
+					maxLines: 2
+                },
+                width: 'auto',
+                height: 600,
+                lineWidth: 4,
+                colors: ['#CC0000', '#FF4D4D', '#009933', '#66FF66', '#9999FF', '#3333CC','#FF9900', '#FFCC66', '#009999', '#00FFFF', '#CC00CC',
+                '#FE2EC8', '#CC9900', '#663300', '#006699', '#33CCCC', '#FF0066','#FF99FF'],
+				vAxis: {
+                    format:'#,### GB',
+                    gridlines: {count: 9}
+                },
+				hAxis: {
+				    format:'# H',
+                    viewWindowMode:'maximized',
+                    gridlines: {count: 17}
+                },
+                tootip: {
+                    trigger: 'selection'
+                }
+
+            };
+
+            //var chart = new google.charts.Line(document.getElementById('memory_data'));
+            var chart = new google.visualization.LineChart(document.getElementById('memory_data'));
+
+
+            chart.draw(data, options);
+
+			//////////////////////
+			// Hide select data //
+			//////////////////////
+			var hiddenData = [];
+			colNumber = data.getNumberOfColumns();
+
+			google.visualization.events.addListener(chart, 'select', selectHandler);
+
+			var columns = [];
+			for (var i = 0; i < colNumber; i++){
+				columns.push(i);
+			}
+
+			//hide data when selet
+			function selectHandler() {
+
+				// clone the object and array to avoid reference
+				var optionsNew = JSON.parse(JSON.stringify(options));
+				var columnsNew = columns.slice();
+
+
+				// if select does not in hiddenData, add it, otherwise remove it
+				var sel = chart.getSelection()[0].column;
+				if (hiddenData.indexOf(sel) == -1) {
+					hiddenData.push(sel);
+				}
+				else {
+					hiddenData.splice(hiddenData.indexOf(sel),1);
+				}
+
+				// remove column from displayColumns according to hiddenData
+				for (var i = 0; i < hiddenData.length; i++) {
+					var hdi = hiddenData[i];
+					columnsNew[hdi] = {
+						label: data.getColumnLabel(hdi),
+						type: data.getColumnType(hdi),
+						role: data.getColumnRole(hdi),
+						calc: function () { return null; }
+					}
+					optionsNew.colors[Math.floor(hdi/4)] = '#CCCCCC';
+				}
+
+				//set a view for new display
+            	var view = new google.visualization.DataView(data);
+				view.setColumns(columnsNew);
+				chart.draw(view, optionsNew);
+			}
+			// end //
+        });
+    }
+
+    function drawTesttimeChart() {
+
+        {% if object.time_csv %}
+
+        $.get("{{ object.time_csv.url }}",function(csvString){
+
+                var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+                var data = new google.visualization.arrayToDataTable(arrayData);
+                var view = new google.visualization.DataView(data);
+
+                view.setColumns([0,1]);
+
+                var options = {
+                    chart: {
+                        title: 'Box Office Earnings in First Two Weeks of Opening',
+                        subtitle: 'in millions of dollars (USD)'
+                    },
+                    width: 900,
+                    height: 500,
+                    lineWidth: 4,
+                    colors: ['#000080', '#8197F8', '#9FF781', '#F781F3', '#CC6600', '#F3F781', '#58FAD0'],
+                    vAxis: {format:'#,### S'},
+                    hAxis: {format:'# '}
+
+                };
+
+                var chart = new google.visualization.LineChart(document.getElementById('testtime_data'));
+
+                chart.draw(data, options);
+            });
+
+        document.getElementById("testtime_data").innerHTML=err.message;
+
+        {% endif %}
+
+
+    }
+
+    $(window).resize(function(){
+        drawMemoryChart();
+        drawHardDiskChart();
+        drawTesttimeChart();
+    });
+
+</script>
+
+{% endblock %}

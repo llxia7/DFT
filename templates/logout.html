@@ -1,0 +1,54 @@
+{% extends "mind_base.html" %}
+{% load i18n %}
+
+{% block bodyclass %}onecoloumn{% endblock %}
+
+{% block bodywrapper %}
+
+<div id="wrapper" >
+	<div id="header-wrapper">
+		<header id="header">
+			<div class="5grid-layout">
+				<div class="row">
+					<div class="12u" id="logo"> <!-- Logo -->
+						<h1><a href="#" class="mobileUI-site-name">  MIND System </a></h1> 
+
+  					</div>
+				</div>
+			</div>
+
+			<div class="5grid-layout">
+				<div class="row">
+					<div class="12u" id="menu">
+						<div id="menu-wrapper">
+							<nav class="mobileUI-site-nav">
+								<ul>
+									<li><a href="/">Homepage</a></li>
+									<li><a href="#">Issue List</a></li>
+									<li><a href="#">Monthly Report</a></li>
+									<li class="current_page_item"><a href="/app_man/">Application Manager</a></li>
+									<li><a href="#">Other</a></li>
+								</ul>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</div>
+		</header>
+	</div>
+	<div id="page-wrapper" class="5grid-layout" >
+
+		<div class="row">
+			<div class="2u">
+
+<p>{% trans "We gonna miss you!" %}</p>
+<p><a href="/user_login/">{% trans 'Login Again' %}</a></p>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% endblock %}
+

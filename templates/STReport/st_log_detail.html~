@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+{% extends "stest/ST_base.html" %}
+{% load i18n %}
+
+{% block pageWrapper %}
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">{{ object.title }}</h1>
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+            <!-- /.row -->
+            <div class="row">
+                <div class="col-lg-10">
+					<form role="form" action=/stest/edit_report method="post">{% csrf_token %}
+                    <div >
+						<button type="submit" class="btn btn-default" name="action" value="edit">Edit</button>
+					</div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Basic Information
+                        </div>
+                        <div class="panel-body">
+                            <table class="table table-bordered table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th>Begin Time</th>
+                                        <td>{{ object.begin_time|date:"Y-m-d G:i" }}</td>
+                                        <th>End Time</th>
+                                        <td>{{ object.end_time|date:"Y-m-d G:i" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Work Station Model</th>
+                                        <td>{{ object.workstation_model }}</td>
+                                        <th>Work Station Name</th>
+                                        <td>{{ object.workstation_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Device</th>
+                                        <td colspan="3">{{ object.device }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>ST Tape</th>
+                                        <td colspan="3">{{ object.st_tape }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>TCCT Tape</th>
+                                        <td colspan="3">{{ object.tcct_tape }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+								<input type="hidden" name="e_pk" value="{{ object.pk }}" />
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+							{{ object.title }}
+                        </div>
+                        <div class="panel-body">
+                            <div class="row" id="memory_data" style="width: 900px; height: 500px"></div>
+                        </div>
+                        <div class="panel-body">
+                            Remarks
+                            <p>{{ object.remarks_mem }}</p>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+							Test Time
+                        </div>
+                        <div class="panel-body">
+                            <div class="row" id="testtime_data" style="width: 900px; height: 500px"></div>
+                        </div>
+                        <div class="panel-body">
+                            Remarks
+                            <p>{{ object.remarks_tet }}</p>
+                        </div>
+                    </div>
+					</form>
+                </div>
+                <!-- /.col-lg-8 -->
+            </div>
+            <!-- /.row -->
+{% endblock %}
+
+{% block googleChart %}
+<!-- ### Google Chart -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<!--
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+ <script src="https://www.google.com/jsapi"></script> 
+-->
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script> 
+<script src="/templates/js/google-jsapi.js"></script>
+<script src="/templates/js/jquery.csv-0.71.js"></script> 
+
+
+
+
+<!-- ############# Line Chart Function ############## -->
+<script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawMemoryChart);
+    google.setOnLoadCallback(drawTesttimeChart);
+
+
+    function drawMemoryChart() {
+        var data
+        console.log("./files/" + "{{ object.data_csv }}");
+            
+        $.get("{{ object.data_csv.url }}",function(csvString){
+        
+            var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+            var data = new google.visualization.arrayToDataTable(arrayData);
+            var view = new google.visualization.DataView(data);
+
+            view.setColumns([0,1]);
+
+            var options = {
+                chart: {
+                    title: 'Box Office Earnings in First Two Weeks of Opening',
+                    subtitle: 'in millions of dollars (USD)'
+                },
+                width: 900,
+                height: 500,
+                lineWidth: 4,
+                colors: ['#F78181','#DA81F8', '#8197F8', '#9FF781', 'F781F3', 'F3F781', '58FAD0'],
+				vAxis: {format:'#,### MB'},
+				hAxis: {format:'# H'}
+
+            };
+            
+            //var chart = new google.charts.Line(document.getElementById('memory_data'));
+            var chart = new google.visualization.LineChart(document.getElementById('memory_data'));
+            
+            chart.draw(data, options);
+        });
+        console.log("in function debug result = " + data );
+    }
+
+    function drawTesttimeChart() {
+        var data
+        console.log("./files/" + "{{ object.time_csv }}");
+            
+        $.get("{{ object.time_csv.url }}",function(csvString){
+        
+            var arrayData = $.csv.toArrays(csvString, {onParseValue: $.csv.hooks.castToScalar});
+            var data = new google.visualization.arrayToDataTable(arrayData);
+            var view = new google.visualization.DataView(data);
+
+            view.setColumns([0,1]);
+
+            var options = {
+                chart: {
+                    title: 'Box Office Earnings in First Two Weeks of Opening',
+                    subtitle: 'in millions of dollars (USD)'
+                },
+                width: 900,
+                height: 500,
+                lineWidth: 4,
+                colors: ['#000080', '#8197F8', '#9FF781', 'F781F3', 'F3F781', '58FAD0'],
+				vAxis: {format:'#,### S'},
+				hAxis: {format:'# '}
+
+            };
+            
+            var chart = new google.visualization.LineChart(document.getElementById('testtime_data'));
+            
+            chart.draw(data, options);
+        });
+        console.log("in function debug result = " + data );
+    }
+
+
+</script>
+{% endblock %}

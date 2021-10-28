@@ -1,0 +1,7 @@
+
+==========
+20170419
+1. add new js funtion to hide the data when select a line of the legend, legend will also turn gray. Select the legend again, the line will come back.
+2. change Stress Test import page RSZ combo box default selected.
+3. commite left side navigation of ATM.
+4. change ST tape in import page and detail page to SMT tape.

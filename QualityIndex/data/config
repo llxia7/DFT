@@ -1,0 +1,14 @@
+LPBP: 
+    656
+
+Current PSI Begin:  
+    2019.11.25
+
+Current PSI End: 
+    2020.01.26
+
+jql_x:
+    'filter in ("ZZ__helper ST8.0.x in-releases") AND issuetype = Bug AND priority!=Low AND status not in (New, "Release Pending", Closed) AND ("Related Projects" != "Future 8.x HW" OR "Related Projects" is EMPTY) AND "Team Manager" in (membersOf("SOC-RD-SHA-project-managers"))'
+
+jql_y:
+    'project = CR AND issuetype = Bug AND "Team Manager" in (xue-feng.du, wei.yan, rong.xu, ivan.lv, wei.xiao, jason.guo, liang.ge, thomas.shi, george.chen, vincent.chu, dang-lin.li, randy.yu) AND Class = SW AND (affectedVersion in versionMatch("SmarTest 8") OR affectedVersion in versionMatch(ST-TCCT) OR affectedVersion in versionMatch(ST-TP360) AND (fixVersion in versionMatch("ST-TP360 4.*.*") OR fixVersion is EMPTY)) AND createdDate >= 2019-11-25 AND createdDate <= now() ORDER BY priority DESC'
